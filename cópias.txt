@@ -1,0 +1,36 @@
+#pragma once
+#include <cstdint>
+
+// Usamos um namespace para organizar as máscaras de bits (flags)
+namespace PontoFlags {
+    enum Mascara : uint32_t {
+        NENHUM      = 0,
+        ORIGEM_LEV  = 1 << 0,  // Levantamento de campo
+        ORIGEM_PROJ = 1 << 1,  // Dado de projeto
+        FIXO        = 1 << 2,  // Ponto de controle / Coordenada fixa
+        EXCLUIDO    = 1 << 31  // Flag de "lixeira" (soft delete)
+    };
+}
+
+// O Molde: Alinhado em 16 bytes para Cache e Performance
+struct alignas(16) Ponto {
+    union {
+        struct {
+            uint32_t x; // Décimo de milímetro (Offset positivo)
+            uint32_t y;
+            uint32_t z;
+        };
+        uint32_t xyz[3]; // Acesso por array para álgebra vetorial
+    };
+    
+    uint32_t flags; // Flags de estado, camada e metadados básicos
+};
+#pragma once
+#include <cstdint>
+
+struct CabecalhoTop {
+    char assinatura[4]; // Sempre "TOPB" (Topografia Binário)
+    uint32_t versao;    // Para você não quebrar arquivos antigos no futuro
+    uint32_t totalPontos;
+    uint32_t reservado; // Para manter o cabeçalho alinhado também
+};

@@ -1,0 +1,36 @@
+# --- Compilação C++/Qt ---
+# Ignora as pastas de build que o Qt Creator cria (o maior "lixo")
+build*/
+debug/
+release/
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+*.a
+
+# --- Arquivos de Configuração da IDE ---
+# Ignora configurações específicas da sua máquina (caminhos de compilador, etc)
+*.user
+*.pro.user
+*.pro.user.*
+.cmake/
+CMakeLists.txt.user
+.vs/
+.idea/
+
+# --- Arquivos Temporários do Windows e AutoCAD ---
+Thumbs.db
+desktop.ini
+*.bak
+*.log
+*.tmp
+# Arquivos de trava do AutoCAD
+*.dwl
+*.dwl2
+
+# --- Backup e Legado ---
+# Caso você esqueça algo dentro das pastas, isso evita subir pro GitHub
+backup/
+old/
