@@ -1,8 +1,23 @@
 //  portaSerialWin.h
 #pragma once
-#include "motorComunicacao.h"
-#include <windows.h>
+
+// 1. Headers da biblioteca padrão C++ PRIMEIRO
 #include <string>
+#include <cstdint>
+
+// 2. Definições para "limpar" o windows.h
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX // Impede que o Windows defina macros min/max que quebram o C++
+#endif
+
+// 3. Header do Windows
+#include <windows.h>
+
+// 4. Seus headers
+#include "motorComunicacao.h"
 
 class PortaSerialWin : public MotorComunicacao
 {

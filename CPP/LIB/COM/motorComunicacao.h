@@ -22,3 +22,4 @@ public:
     virtual void desconectar() = 0;
     virtual bool estaConectado() const = 0;
 };
+//Q_DECLARE_METATYPE(ConfigSerial)

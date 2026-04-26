@@ -1,6 +1,7 @@
 //	portaSerialWin.cpp
-#include "portaSerialWin.h"
+#include "portaSerialWin.h" // Este deve ser o primeiro!
 #include <cstdio>
+#include <string>
 
 PortaSerialWin::PortaSerialWin() : mHandlePorta(INVALID_HANDLE_VALUE)
 {}
@@ -43,9 +44,11 @@ bool PortaSerialWin::conectar(int portaNumero, const ConfigSerial& config)
     }
     if(!SetCommState(mHandlePorta, &dcbSerialParams)) return false;
     COMMTIMEOUTS timeouts = {0};
-    timeouts.ReadIntervalTimeout = 50;
+    timeouts.ReadIntervalTimeout = MAXDWORD;
+    timeouts.ReadTotalTimeoutMultiplier = 0;
+    timeouts.ReadTotalTimeoutConstant = 0;
+    timeouts.ReadTotalTimeoutMultiplier = 0;
     timeouts.ReadTotalTimeoutConstant = 50;
-    timeouts.ReadTotalTimeoutMultiplier = 10;
     SetCommTimeouts(mHandlePorta, &timeouts);
     return true;
 }

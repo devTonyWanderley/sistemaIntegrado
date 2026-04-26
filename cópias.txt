@@ -34,3 +34,170 @@ struct CabecalhoTop {
     uint32_t totalPontos;
     uint32_t reservado; // Para manter o cabeçalho alinhado também
 };
+
+//	O tipo para uso na camada de leitura do original (oriundo da comunicação serial, parse específico)
+//	e gravação do binário:
+struct PontoBin
+{
+	char nome[17];
+	char atri[17];
+	uint32_t abci;
+	uint32_t orde;
+	uint32_t cota;
+}
+
+//	muito grande...
+
+struct alignas(16) PontoBin {
+    uint32_t abci;  // 4 bytes (X)
+    uint32_t orde;  // 4 bytes (Y)
+    uint32_t cota;  // 4 bytes (Z)
+    
+    // Os últimos 4 bytes divididos:
+    uint16_t iNome; // 2 bytes (Índice do nome no dicionário)
+    uint16_t iAtri; // 2 bytes (Índice do atributo no dicionário)
+}; // Total: exatos 16 bytes.
+
+#pragma once
+#include <cstdint>
+
+struct alignas(16) PontoBin {
+    uint32_t abci;  // 4 bytes: X (décimo de milímetro)
+    uint32_t orde;  // 4 bytes: Y
+    uint32_t cota;  // 4 bytes: Z
+    
+    // Bloco de Identificação e Estado (4 bytes restantes)
+    // 12 bits para Nome (4096 nomes únicos)
+    // 12 bits para Atributo (4096 atributos únicos)
+    // 8 bits para Flags de Coleta (Etapa, Origem, etc.)
+    uint32_t meta; 
+
+    // Helpers para facilitar sua vida (Bit Shifting)
+    uint16_t obterNome() const { return (meta >> 20) & 0xFFF; }
+    uint16_t obterAtri() const { return (meta >> 8) & 0xFFF; }
+    uint8_t  obterFlags() const { return meta & 0xFF; }
+};
+
+#pragma once
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <cstdint>
+
+class Dicionario {
+public:
+    // Construtor agora recebe a estimativa da classe cliente.
+    // O valor default (10) evita desperdício se o cliente não souber o tamanho.
+    explicit Dicionario(uint16_t estimativa = 10) {
+        mLista.reserve(estimativa);
+        mMapaInverso.reserve(estimativa);
+        
+        // Mantemos o índice 0 reservado para strings vazias/nulas
+        adicionar(""); 
+    }
+
+    uint16_t adicionar(const std::string& texto) {
+        if (texto.empty()) return 0;
+
+        auto it = mMapaInverso.find(texto);
+        if (it != mMapaInverso.end()) {
+            return it->second;
+        }
+
+        // Prevenção contra estouro do uint16_t (65535 itens)
+        if (mLista.size() >= 0xFFFF) return 0; 
+
+        uint16_t novoIndice = static_cast<uint16_t>(mLista.size());
+        mLista.push_back(texto);
+        mMapaInverso[texto] = novoIndice;
+        
+        return novoIndice;
+    }
+
+    std::string obter(uint16_t indice) const {
+        return (indice < mLista.size()) ? mLista[indice] : "";
+    }
+
+private:
+    std::vector<std::string> mLista;               
+    std::unordered_map<std::string, uint16_t> mMapaInverso; 
+};
+
+#include <windows.h>
+#include <iostream>
+#include <vector>
+#include <string>
+
+std::vector<std::string> listarCabosConectados() {
+    std::vector<std::string> portas;
+    HKEY hKey;
+    // Abre a chave onde o Windows mapeia os cabos seriais/USB detectados
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\SERIALCOMM", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        char nomeValor[255];
+        BYTE dadosValor[255];
+        DWORD dwIndex = 0, tamNome, tamDados, tipo;
+
+        while (true) {
+            tamNome = 255; tamDados = 255;
+            if (RegEnumValueA(hKey, dwIndex, nomeValor, &tamNome, NULL, &tipo, dadosValor, &tamDados) == ERROR_SUCCESS) {
+                portas.push_back((char*)dadosValor); // Ex: "COM3"
+                dwIndex++;
+            } else break;
+        }
+        RegCloseKey(hKey);
+    }
+    return portas;
+}
+
+int main() {
+    auto portas = listarCabosConectados();
+    
+    if (portas.empty()) {
+        std::cout << "Nenhum cabo serial detectado. Verifique a conexao fisica." << std::endl;
+        return -1;
+    }
+
+    std::cout << "Cabos detectados: " << std::endl;
+    for (size_t i = 0; i < portas.size(); ++i) {
+        std::cout << i << " - " << portas[i] << std::endl;
+    }
+
+    // Seleção da porta (ajuste conforme o índice desejado)
+    std::string portaEscolhida = portas[0]; 
+    int numPorta = std::stoi(portaEscolhida.substr(3)); // Converte "COM3" para 3
+
+    PortaSerialWin motor;
+    ConfigSerial config{9600, 8, Paridade::Nenhum, StopBits::Um};
+
+    std::cout << "\nTentando conectar em " << portaEscolhida << "..." << std::endl;
+
+    if (motor.conectar(numPorta, config)) {
+        std::cout << "Sucesso! Cabo " << portaEscolhida << " aberto." << std::endl;
+        std::cout << "Aguardando transmissao (ASCII)..." << std::endl;
+
+        char buffer[1024];
+        while (true) {
+            int32_t lidos = motor.lerParaBuffer(buffer, sizeof(buffer));
+            if (lidos > 0) {
+                // Aqui usamos sua sugestão: verificar a integridade ASCII
+                verificarCodificacao(buffer, lidos);
+            }
+            Sleep(100); // Evita fadiga do processador
+        }
+    } else {
+        std::cout << "Erro ao abrir " << portaEscolhida << ". Porta em uso ou cabo desconectado." << std::endl;
+    }
+
+    return 0;
+}
+
+Você tem razão: o contexto (o "cache" da nossa conversa) ficou extenso porque detalhamos desde a faxina do C: até a análise de bits da Geodetic. Quando a "linguição" das mensagens cresce muito, posso começar a repetir padrões ou perder a agilidade.
+Reiniciar em um novo guia é uma excelente ideia.
+O que fazer para não perder o fio da meada:
+Copie e cole o conteúdo final do seu leiame.mde a última versão da struct PontoBinnova conversa.
+Diga: "Estamos na fase de Ancoragem no GitHub e o próximo passo é o Parser de Leituras de Campo da Geodésica (transformar o log ASCII em ângulos/distâncias)."
+Dessa forma, eu começo com a "mente limpa", mas sabemos exatamente onde paramos na nossa arquitetura Bottom-Up .
+Te espero na nova guia! Traga os dados da Geodetic (aquele log com [0x2]) para começarmos a fatiar os ângulos e distâncias.
+
+
+C:/DESENV/CPP/LIB/QTW pra as interfaces. Quais as implicações?

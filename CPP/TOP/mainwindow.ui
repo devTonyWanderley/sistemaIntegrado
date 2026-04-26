@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QComboBox" name="comboPerfis">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>70</y>
+      <width>191</width>
+      <height>26</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnConfigManual">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>80</y>
+      <width>181</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Configuração manual</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnIniciarDownload">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>470</y>
+      <width>261</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Gatilho de leitura</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnSalvar">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>460</y>
+      <width>191</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Salvar</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="txtLog">
+    <property name="geometry">
+     <rect>
+      <x>23</x>
+      <y>134</y>
+      <width>721</width>
+      <height>301</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
