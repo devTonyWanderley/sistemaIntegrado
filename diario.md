@@ -15,6 +15,7 @@
 "Definição do formato .raw como camada de persistência imediata para garantir a imutabilidade dos dados de campo."
 "Finalizada a camada de Driver Serial: Implementação completa de leitura, thread e log binário bruto (Raw Logging) via WinAPI."
 "Próxima meta: Arquitetura de tradução offline (Parsers Modulares)."
+"Criação da infraestrutura de validação permanente em /VALIDA com lógica de encerramento por timeout de inatividade."
 
 C:/DESENV/
 ├── diretrizes.md               # A "Constituição" do projeto
