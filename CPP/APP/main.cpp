@@ -1,28 +1,23 @@
 //	main.cpp
 #include <QApplication>
 #include <QWidget>
-#include "SerialWin32.h"
-#include "Dicionario.h"
+#include "PainelConexao.h"
 
 // Exemplo de como o sistema vai "ouvir" a serial na produção
 // No futuro, isso alimentará o Parser e não apenas o console
-void callbackProducao(uint8_t byte) {
+void callbackProducao([[maybe_unused]] uint8_t byte) {
     // Aqui o dado entra no fluxo de processamento do sistema
 }
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
-    // 1. Inicialização do "Cérebro"
-    // Dicionario dicionario;
-    // dicionario.prealocar(1024 * 1024, 1000); // 1MB para strings iniciais
+    // Em vez de QWidget window, usamos a sua classe:
+    PainelConexao painel;
 
-    // 2. Configuração da Janela Principal (Qt)
-    QWidget janelaPrincipal;
-    janelaPrincipal.setWindowTitle("Ética Construtora - Gestão de Obras");
-    janelaPrincipal.resize(1024, 768);
-    janelaPrincipal.show();
+    painel.setWindowTitle("Ética Construtora - Captura de Campo");
+    painel.resize(400, 300); // Ajuste um tamanho inicial razoável
+    painel.show();
 
-    // O sistema fica aguardando eventos da interface aqui
     return app.exec();
 }

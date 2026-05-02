@@ -11,8 +11,10 @@ HEADERS += \
     ../CORE/TYPES/tipPonto.h \
     ../CORE/TYPES/Dicionario.h \
     ../CORE/TYPES/DeviceConfigs.h \
-    ../CORE/DRIVER/SerialWin32.h
+    ../CORE/DRIVER/SerialWin32.h \
+    PainelConexao.h
 
 SOURCES += \
+    PainelConexao.cpp \
     main.cpp \
     ../CORE/DRIVER/SerialWin32.cpp

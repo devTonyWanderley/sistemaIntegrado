@@ -1,0 +1,47 @@
+Vamos aplicar oPrincípio de Soberania e Limpeza.
+Abaixo, descrevo o DNA do projeto de forma técnica para que você possa injetar em um novo contexto:
+⚙️ Núcleo: Motor Serial (WinAPI Nativo)Abstração :
+Driver de baixo nível que trata a porta COM como um dispositivo de arquivo ( CreateFileA).
+Concorrência :
+Thread nativo dedicado ( CreateThread) com prioridade de tempo real e leitura em blocos (256 bytes) para alta vazão.
+Comunicação :
+Protocolo baseado em Callbacks C-Style ( typedef void (*SerialCallback)(uint8_t)).
+Configuração Atômica :
+Mapa de bits de 32 bits (20 bits para BaudRate, 4 para Paridade, 4 para StopBits, 4 para DataBits) para configuração instantânea via DCB.
+Persistência :
+Camada de Raw Logging desacoplada, salvando bytes brutos via STL ( std::ofstream) após encerramento da captura.
+
+UI: Camada de Apresentação (Qt Modular)Arquitetura :
+Código C++ puro (Qt Widgets sem arquivos .ui), garantindo portabilidade futura para Win32 puro.
+Comportamento de Estado :
+Máquina de Estados Finitos (FSM) controlando o fluxo:
+IDLE: Seleção de perfis inteligentes (Leica, Topcon, GPS).
+CAPTURANDO:
+Bufferização em memória ( std::vector<uint8_t>) protegida por std::mutex.
+PRONTO_PARA_SALVAR: Decisão de destino ( QFileDialog) ou descarte do buffer.
+Integração :
+Ponte estática segura ( static receptorEstatico) conectando o Thread do WinAPI ao buffer da janela Qt.
+Estrutura de Diretórios
+CORE/TYPES: Definições binárias ( tipPonto.h, DeviceConfigs.h).
+CORE/DRIVER: Implementação WinAPI ( SerialWin32.h/.cpp).
+APP: Orquestração de interface e lógica de negócio.
+VALIDA: Testes permanentes e manuais de hardware.
+
+Mensagem da guia atual pra a nova guia:
+Diretriz de Reinício de Projeto:
+Sistema Ética Construtora (ECApp)
+1. Objetivo: Consolidar uma interface modular ( PainelConexao) em C++20/Qt, integrando o motor serial WinAPI já validado, seguindo uma filosofia de soberania de dados e minimalismo.
+2. Estado Técnico do Core (Soberania WinAPI):
+Motor: SerialWin32 usa CreateThreade ReadFileem blocos (256b).
+Ligar de volta: typedef void (*SerialCallback)(uint8_t byte) .
+Máscara de bits (32 bits): [Size:4][Stop:4][Parity:4][Baud:20] . Suporta mais de 115200 bps.
+Persistência: Fluxo desacoplado: Hardware -> Buffer RAM (Mutex) -> STL (ofstream) .
+3. Comportamento da Interface (FSM):
+Estados: IDLE (Configuração) → CAPTURANDO(Thread Ativa) → PRONTO_PARA_SALVAR(Hardware fechado, buffer retido).
+UX: Perfis inteligentes que pré-configuram Baud e Extensão (.gsi, .raw, .nmea), mantendo edição livre.
+Segurança: Ponte estática static receptorEstaticocom std::lock_guardpara proteção do std::vector<uint8_t>.
+4. Ordem de Construção (Blindagem de Memória):
+Para evitar travamentos na inicialização:
+Instanciar todos os Widgets ( new).
+Dados populares (Listar portas COM via QueryDosDeviceA).
+Estabelecer conexões de Sinais/Slots.

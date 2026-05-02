@@ -15,7 +15,9 @@ void processadorDeCaptura(uint8_t byte) {
     }
 
     // 2. Mostra na tela para conferência visual
-    std::cout << (char)byte << std::flush;
+    //std::cout << (char)byte << std::flush;
+    static int contador = 0;
+    if (++contador % 100 == 0) std::cout << "." << std::flush;
 
     // 3. Atualiza o cronômetro de atividade
     ultimaAtividade = std::chrono::steady_clock::now();

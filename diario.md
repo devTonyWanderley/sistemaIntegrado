@@ -16,6 +16,7 @@
 "Finalizada a camada de Driver Serial: Implementação completa de leitura, thread e log binário bruto (Raw Logging) via WinAPI."
 "Próxima meta: Arquitetura de tradução offline (Parsers Modulares)."
 "Criação da infraestrutura de validação permanente em /VALIDA com lógica de encerramento por timeout de inatividade."
+"Arquitetura Bi-Partida: O CORE deve permanecer agnóstico à interface. O uso do Qt é restrito à camada de apresentação para garantir portabilidade futura para WinAPI pura."
 
 C:/DESENV/
 ├── diretrizes.md               # A "Constituição" do projeto
