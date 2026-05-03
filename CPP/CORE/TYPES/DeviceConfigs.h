@@ -2,8 +2,8 @@
 #pragma once
 #include <cstdint>
 
-
-struct SerialParams {
+struct SerialParams
+{
     uint32_t raw;
 
     // Novo Mapa: [4b: Size][4b: Stop][4b: Parity][20b: Baud]
