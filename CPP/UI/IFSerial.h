@@ -8,6 +8,8 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QStringList>
+#include <vector>
+#include "../CORE/DRIVER/SerialModerno.h"
 
 class IFSerial: public QWidget
 {
@@ -17,6 +19,9 @@ public:
     enum class Status{OCIOSO, OCUPADO};
     enum class Fase{CONECTANDO, CAPTURANDO, SALVANDO};
 private slots:
+    void onPbAgirClicked();
+    void onCbEquipoChanged(int index);
+    void onPbDeclinarClicked();
 private:
     //  Componentes:
     QLabel *mLbStatus;
@@ -33,7 +38,13 @@ private:
     Status mEstado;
     Fase mFase;
 
+    std::vector<char> mEspelhoCabo;
+    SerialModerno mMotor;
+
     QStringList buscaPortas();
     void Povoar();
     void MontarLayout();
+    void AtualizarInterface();
+    bool SalvarArquivoSTL();
+    bool TentarAbrirConexao();
 };

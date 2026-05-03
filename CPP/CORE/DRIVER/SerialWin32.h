@@ -1,3 +1,4 @@
+//	SerialWin32.h
 #pragma once
 #include <windows.h>
 #include <cstdint>

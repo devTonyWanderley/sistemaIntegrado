@@ -4,4 +4,5 @@ CONFIG += ordered
 
 SUBDIRS += \
     APP \
-    VALIDA/vSerial
+    VALIDA/vSerial \
+    VALIDA/vMSerial
