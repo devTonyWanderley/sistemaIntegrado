@@ -26,7 +26,7 @@ private:
     //  Componentes:
     QLabel *mLbStatus;
     QComboBox *mCbEquipo, *mCbPorta, *mCbBaud, *mCbPar, *mCbStop;
-    QPushButton *mPbAgir, *mPbDeclinar, *mPbAtualizar;
+    QPushButton *mPbAgir, *mPbDeclinar;
 
     //  layout:
     QGroupBox *mGrupoHard;

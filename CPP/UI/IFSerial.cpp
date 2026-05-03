@@ -1,3 +1,4 @@
+//  IFSerial.cpp
 #include "../UI/IFSerial.h"
 #include "../CORE/TYPES/Equipamentos.h"
 #include <windows.h>
@@ -11,40 +12,24 @@ IFSerial::IFSerial(QWidget *parent): QWidget(parent), mEstado(Status::OCIOSO), m
 {
     //  Instanciar objetos:
     mLbStatus = new QLabel(this);
-
     mCbEquipo = new QComboBox(this);
     mCbPorta = new QComboBox(this);
     mCbBaud = new QComboBox(this);
     mCbPar = new QComboBox(this);
     mCbStop = new QComboBox(this);
-
     mPbAgir = new QPushButton("Comunicar", this);
     mPbAgir->setMaximumHeight(50);
     mPbDeclinar = new QPushButton("Declinar", this);
     mPbDeclinar->setMaximumHeight(50);
-    mPbAtualizar = new QPushButton("Atualizar", this);
-    mPbAtualizar->setMaximumHeight(50);
-
     mGrupoHard = new QGroupBox("Configuração de Hardware", this);
     mLayHard = new QFormLayout(mGrupoHard);
     mLayBotoes = new QHBoxLayout();
     mLayPrincipal = new QVBoxLayout();
-
     Povoar();   //  povoar combobox
-
     MontarLayout(); //  montar layout
-
-    // 1. Quando mudar o equipamento, atualiza os campos de hardware
-    connect(mCbEquipo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &IFSerial::onCbEquipoChanged);
-
-    // 2. O botão principal (Agir) que controla a Máquina de Estados
+    connect(mCbEquipo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &IFSerial::onCbEquipoChanged);
     connect(mPbAgir, &QPushButton::clicked, this, &IFSerial::onPbAgirClicked);
-
-    // 3. O botão de escape (Declinar) que cancela ou sai
     connect(mPbDeclinar, &QPushButton::clicked, this, &IFSerial::onPbDeclinarClicked);
-
-    //  [...]
 }
 
 QStringList IFSerial::buscaPortas()
@@ -61,17 +46,12 @@ QStringList IFSerial::buscaPortas()
 
 void IFSerial::Povoar()
 {
-    //  povoar mCbEquipo:
     mCbEquipo->clear();
     for(auto &e : LISTA_EQUIPAMENTOS) mCbEquipo->addItem(e.nome);
-
-    //  povoar mCbPorta:
     mCbPorta->clear();
     QStringList listPortas = buscaPortas();
     if(listPortas.empty()) mCbPorta->addItem("Null");
     else for(auto &nome : listPortas) mCbPorta->addItem(nome);
-
-    //  povoar mCbBaud:
     mCbBaud->clear();
     mCbBaud->addItem("2400");
     mCbBaud->addItem("4800");
@@ -80,19 +60,14 @@ void IFSerial::Povoar()
     mCbBaud->addItem("38400");
     mCbBaud->addItem("57600");
     mCbBaud->addItem("115200");
-
-    //  povoar mCbPar:
     mCbPar->clear();
     mCbPar->addItem("Nenhuma");
     mCbPar->addItem("Impar");
     mCbPar->addItem("Par");
-
-    //  povoar mCbStop:
     mCbStop->clear();
     mCbStop->addItem("Um");
     mCbStop->addItem("Um e meio");
     mCbStop->addItem("Dois");
-    //  [...]?  verificar se precisa habilitar aqui os comobobox's
 }
 
 void IFSerial::MontarLayout()
@@ -102,15 +77,11 @@ void IFSerial::MontarLayout()
     mLayHard->addRow("Baudrate: ", mCbBaud);
     mLayHard->addRow("Paridade: ", mCbPar);
     mLayHard->addRow("Parada: ", mCbStop);
-
-    mLayBotoes->addWidget(mPbAgir, 2);
-    mLayBotoes->addWidget(mPbDeclinar, 2);
-    mLayBotoes->addWidget(mPbAtualizar, 1);
-
+    mLayBotoes->addWidget(mPbAgir, 1);
+    mLayBotoes->addWidget(mPbDeclinar, 1);
     mLayPrincipal->addWidget(mGrupoHard);
     mLayPrincipal->addLayout(mLayBotoes);
     mLayPrincipal->addWidget(mLbStatus);
-
     this->setLayout(mLayPrincipal);
 }
 
@@ -118,7 +89,6 @@ void IFSerial::AtualizarInterface()
 {
     bool podeEditarHardwere = (mFase == Fase::CONECTANDO);
     mGrupoHard->setEnabled(podeEditarHardwere);
-    mPbAtualizar->setEnabled(podeEditarHardwere);
     switch(mFase)
     {
     case Fase::CONECTANDO:
@@ -170,32 +140,33 @@ void IFSerial::onPbAgirClicked()
 
 bool IFSerial::TentarAbrirConexao()
 {
-    QString porta = mCbPorta->currentText();
-    if(porta == "Null" || porta.isEmpty())
+    QString portaNome = mCbPorta->currentText();
+    if(portaNome == "Null" || portaNome.isEmpty())
     {
-        mLbStatus->setText("Status: Nenhuma porta válida selecionada!");
+        mLbStatus->setText("Status: Nenhuma porta selecionada!");
         return false;
     }
     uint32_t baud = mCbBaud->currentText().toUInt();
-    uint8_t paridade = static_cast<uint8_t>(mCbPar->currentIndex());
-    uint8_t stopBits = static_cast<uint8_t>(mCbStop->currentIndex());
+    uint8_t paridade = static_cast<uint8_t>(mCbPar->currentIndex()); // 0:None, 1:Odd, 2:Even
+    uint8_t stopBits = static_cast<uint8_t>(mCbStop->currentIndex()); // 0:1, 1:1.5, 2:2
     uint8_t dataSize = 8;
     SerialParams params = { .raw = SerialParams::build(baud, paridade, stopBits, dataSize) };
     mEspelhoCabo.clear();
-    bool sucesso = mMotor.Abrir(porta.toStdString(), params, [this](std::span<const uint8_t> bloco)
-    {
-        QMetaObject::invokeMethod(this, [this, bloco]()
-        {
-            mEspelhoCabo.insert(mEspelhoCabo.end(), bloco.begin(), bloco.end());
-            mLbStatus->setText(QString("Capturando: %1 bytes recebidos...").arg(mEspelhoCabo.size()));
-        },
-        Qt::QueuedConnection);
-    });
+    bool sucesso = mMotor.Abrir(portaNome.toStdString(), params, [this](std::span<const uint8_t> bloco)
+                                {std::vector<char> dadosCopia(bloco.begin(), bloco.end());
+                                    QMetaObject::invokeMethod(this, [this, dadosCopia = std::move(dadosCopia)]() mutable
+                                                              {
+                                                                  mEspelhoCabo.insert(mEspelhoCabo.end(), dadosCopia.begin(), dadosCopia.end());
+                                                                  mLbStatus->setText(QString("Capturando: %1 bytes recebidos...")
+                                                                                         .arg(mEspelhoCabo.size()));
+                                                              }, Qt::QueuedConnection);
+                                });
     if(!sucesso)
     {
-        mLbStatus->setText("Status: Falha ao abrir " + porta);
+        mLbStatus->setText("Status: Falha ao abrir " + portaNome + " (Verifique se está em uso)");
         return false;
     }
+    mLbStatus->setText("Status: Conectado a " + portaNome);
     return true;
 }
 
@@ -205,7 +176,7 @@ bool IFSerial::SalvarArquivoSTL()
     if(caminho.isEmpty()) return false;
     std::ofstream arquivo(caminho.toStdString(), std::ios::binary);
     if(!arquivo.is_open()) return false;
-    arquivo.write(mEspelhoCabo.data(), mEspelhoCabo.size());
+    arquivo.write(reinterpret_cast<const char*>(mEspelhoCabo.data()), mEspelhoCabo.size());
     arquivo.close();
     return true;
 }
@@ -225,29 +196,20 @@ void IFSerial::onPbDeclinarClicked()
     switch (mFase)
     {
     case Fase::CONECTANDO:
-        // No estado inicial, o botão serve para fechar o programa
         this->close();
         break;
-
     case Fase::CAPTURANDO:
-        // Se estiver lendo o cabo, interrompe o motor e joga o lixo fora
         mMotor.Fechar();
         mEspelhoCabo.clear();
         mFase = Fase::CONECTANDO;
         mLbStatus->setText("Status: Captura abortada. Dados descartados.");
         break;
-
     case Fase::SALVANDO:
-        // Se terminou de ler mas desistiu de salvar, limpa tudo e volta ao início
         mEspelhoCabo.clear();
         mFase = Fase::CONECTANDO;
         mLbStatus->setText("Status: Dados descartados. Pronto para nova leitura.");
         break;
     }
-
-    // Como voltamos para o estado inicial nas opções acima, repovoamos as portas
     Povoar();
-
-    // Atualiza cores e habilitação dos botões
     AtualizarInterface();
 }
