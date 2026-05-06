@@ -34,3 +34,7 @@ desktop.ini
 # Caso você esqueça algo dentro das pastas, isso evita subir pro GitHub
 backup/
 old/
+
+# --- arquivos de teste ---
+*.ecr
+*.rar
