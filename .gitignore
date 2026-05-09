@@ -38,3 +38,8 @@ old/
 # --- arquivos de teste ---
 *.ecr
 *.rar
+
+deployEtica/
+estudo/
+Instalador/
+WSerial/
