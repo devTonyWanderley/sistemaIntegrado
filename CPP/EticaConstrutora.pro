@@ -6,4 +6,5 @@ SUBDIRS += \
     APP \
     SERIAL \
     VALIDA/vSerial \
-    VALIDA/vMSerial
+    VALIDA/vMSerial \
+    VALIDA/vMotorSerial

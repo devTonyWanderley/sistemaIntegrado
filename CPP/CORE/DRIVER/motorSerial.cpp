@@ -42,9 +42,15 @@ bool MotorSerial::Abrir(const std::string &porta, const CfgSerial &params, DataC
     dcb.StopBits = params.winStop();
     dcb.ByteSize = params.winSize();
     if(!SetCommState(mHSerial, &dcb)) return false;
+
     COMMTIMEOUTS timeouts = {};
-    timeouts.ReadIntervalTimeout = MAXWORD;
-    timeouts.ReadTotalTimeoutConstant = 0;
+    //timeouts.ReadIntervalTimeout = MAXWORD;
+    timeouts.ReadIntervalTimeout = 50;
+
+    //timeouts.ReadTotalTimeoutConstant = 50;    //  alterado de 0 pra 50
+    uint32_t baud = params.winBaud();
+    timeouts.ReadTotalTimeoutConstant = (baud > 0) ? (200000 / baud) + 100 : 500;
+
     timeouts.ReadTotalTimeoutMultiplier = 0;
     SetCommTimeouts(mHSerial, &timeouts);
     mRodando = true;
