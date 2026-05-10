@@ -3,7 +3,8 @@
 #include <cstdint>
 #include "DeviceConfigs.h"
 
-struct PerfilEquipamento {
+struct PerfilEquipamento
+{
     const char* nome;
     uint32_t params; // Já calculado via SerialParams::build
 };
