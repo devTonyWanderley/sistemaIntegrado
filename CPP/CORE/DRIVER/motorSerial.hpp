@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <atomic>
 #include <thread>
+#include <fstream>
 
 class MotorSerial
 {
@@ -24,6 +25,8 @@ private:
     std::atomic<bool> mRodando{false};
     std::thread mWorker;
     DataCallback mOnData;
+    std::string mNomeArquivo;
+    std::ofstream mArquivo;
     void LoopLeitura();
     std::string GerarNomeTmp() const;
 };

@@ -43,6 +43,8 @@ bool MotorSerial::Abrir(const std::string &porta, const CfgSerial &params, DataC
     dcb.ByteSize = params.winSize();
     if(!SetCommState(mHSerial, &dcb)) return false;
 
+    mNomeArquivo = GerarNomeTmp();
+
     COMMTIMEOUTS timeouts = {};
     //timeouts.ReadIntervalTimeout = MAXWORD;
     timeouts.ReadIntervalTimeout = 50;
@@ -71,6 +73,9 @@ void MotorSerial::Fechar()
 {
     mRodando = false;
     if(mWorker.joinable()) mWorker.join();
+
+    if(mArquivo.is_open()) mArquivo.close();
+
     if(mHSerial != INVALID_HANDLE_VALUE)
     {
         CloseHandle(mHSerial);
@@ -94,7 +99,16 @@ void MotorSerial::LoopLeitura()
             }
             continue;
         }
-        if(bytesLidos > 0 && mOnData) mOnData(std::span<const uint8_t>(buffer, bytesLidos));
+        if(bytesLidos > 0 && mOnData)
+        {
+            if(!mArquivo.is_open()) mArquivo.open(mNomeArquivo, std::ios::app | std::ios::binary);
+            if(mArquivo.is_open())
+            {
+                mArquivo.write(reinterpret_cast<const char*>(buffer), bytesLidos);
+                mArquivo.flush();
+            }
+            mOnData(std::span<const uint8_t>(buffer, bytesLidos));
+        }
         if(bytesLidos == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
