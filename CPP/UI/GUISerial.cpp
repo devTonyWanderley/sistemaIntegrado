@@ -1,16 +1,22 @@
 //  GUISerial.cpp
 #include "GUISerial.hpp"
+#include <vector>
 
 #include <QDebug>
 
 GuiSerial::GuiSerial(QWidget *parent): QWidget(parent)
 {
+    //      --Motor serial
+    mMotor = new MotorSerial;
+
     MontarLay();
 }
 
 void GuiSerial::Preencher()
 {
-    qDebug() << "Função \'void GuiSerial::Preencher()\' - preenche as combos\n";
+    std::vector<std::string> portas = mMotor->ListarPortas();
+    if(portas.empty()) qDebug() << "Nenhuma porta disponível";
+    else for(auto p : portas) qDebug() << p;
 }
 
 void GuiSerial::MontarLay()

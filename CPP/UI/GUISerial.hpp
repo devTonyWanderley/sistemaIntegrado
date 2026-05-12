@@ -9,6 +9,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
+#include "motorSerial.hpp"
+
 class GuiSerial: public QWidget
 {
     Q_OBJECT
@@ -23,6 +25,7 @@ private:
     QFormLayout *mFlHard;
     QHBoxLayout *mHblBotoes;
     QVBoxLayout *mVblMain;
+    MotorSerial *mMotor;
 
     void Preencher();
     void MontarLay();
