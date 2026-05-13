@@ -6,17 +6,63 @@
 
 GuiSerial::GuiSerial(QWidget *parent): QWidget(parent)
 {
-    //      --Motor serial
+    //      --Motor serial:
     mMotor = new MotorSerial;
+    mCfgPorta = new CfgSerial;
+    mEstado = 0;
 
     MontarLay();
 }
 
 void GuiSerial::Preencher()
 {
+    //  -Preencher configurações prontas:
+    mCbEqui->clear();
+    for(auto c : LISTA_EQUIPAMENTOS) mCbEqui->addItem(QString::fromStdString(c.nome));
+
+    //  -Preencher portas, ou constatar indisponibilidade:
+    mCbPorta->clear();
     std::vector<std::string> portas = mMotor->ListarPortas();
-    if(portas.empty()) qDebug() << "Nenhuma porta disponível";
-    else for(auto p : portas) qDebug() << p;
+    if(portas.empty())
+    {
+        mCbPorta->addItem("Nenhuma");
+        mEstado &= 0xfffffffe;
+    }
+    else
+    {
+        for(std::string p : portas) mCbPorta->addItem(QString::fromStdString(p));
+        mEstado |= 1;
+    }
+
+    //  -Preencher baudrate:
+    mCbBaud->clear();
+    mCbBaud->addItem("1200");
+    mCbBaud->addItem("2400");
+    mCbBaud->addItem("4800");
+    mCbBaud->addItem("9600");
+    mCbBaud->addItem("19200");
+    mCbBaud->addItem("38400");
+    mCbBaud->addItem("57600");
+    mCbBaud->addItem("115200");
+
+    //  -Preencher paridade:
+    mCbPar->clear();
+    mCbPar->addItem("Nenhuma");
+    mCbPar->addItem("Impar");
+    mCbPar->addItem("Par");
+    mCbPar->addItem("Marca");
+    mCbPar->addItem("Espaço");
+
+    //  -Preencher bit de parada:
+    mCbStop->clear();
+    mCbStop->addItem("Um");
+    mCbStop->addItem("Um e meio");
+    mCbStop->addItem("Dois");
+
+    //  -Tamanho:
+    mCbSize->clear();
+    mCbSize->addItem("8 bits");
+    mCbSize->addItem("7 bits");
 }
 
 void GuiSerial::MontarLay()

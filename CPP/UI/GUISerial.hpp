@@ -26,6 +26,8 @@ private:
     QHBoxLayout *mHblBotoes;
     QVBoxLayout *mVblMain;
     MotorSerial *mMotor;
+    CfgSerial *mCfgPorta;
+    uint32_t mEstado;
 
     void Preencher();
     void MontarLay();
