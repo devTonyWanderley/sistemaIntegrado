@@ -1,0 +1,49 @@
+{
+    A: sentinela de disponibilidade de portas (atualizada via Timer ou Evento);
+    B: sentinela de validade do HANDLE conectado;
+    C: sentinela de fluxo de bytes (dados chegando no buffer);
+    D: botão declinar;
+    E: botão agir;
+
+    estados
+    {
+        #1: desconectado, portas indisponíveis
+        {
+            Evento(A_Ficou_Disponivel): -> #2;
+            D: "Fechar", [encerra o programa];
+            E: desabilitado;
+        }
+
+        #2: desconectado, porta(s) disponível(veis)
+        {
+            Evento(A_Ficou_Indisponivel): -> #1;
+            D: "Fechar", [encerra o programa];
+            E: "Conectar", [chama motor->Abrir()] -> se_sucesso(#3) se_falha(#1);
+        }
+
+        #3: conectado, aguardando dados (Porta Aberta / Ociosa)
+        {
+            B?: ñ -> #1;                          // Cabo desconectado fisicamente
+            C?: s -> [abre arquivo .tmp] -> #4;  // Primeiro byte chegou, começa a gravar
+            D: "Desconectar", [chama motor->Fechar()] -> #2;
+            E: desabilitado;
+        }
+
+        #4: conectado, lendo e gravando
+        {
+            B?: ñ -> [fecha arquivo] -> #1;       // Queda física de energia/cabo
+            C?: s -> [escreve no ofstream];       // Mantém no #4 enquanto houver dados
+            D: "Abortar", [para thread de leitura] -> #5;
+            
+            // Adicionado: Fim do pacote do equipamento (Ex: recebeu '\n' ou timeout de 3 segundos)
+            Evento(FimDePacote): -> #5; 
+        }
+
+        #5: leitura encerrada (Buffer em cache/arquivo temporário)
+        {
+            // Destinos determinísticos: limpa o ambiente e checa a existência da porta antes de voltar
+            D: "Descartar", [deleta arquivo .tmp] -> se(A){ #2 } senao{ #1 };
+            E: "Salvar", [copia arquivo .tmp para destino final] -> se(A){ #2 } senao{ #1 };
+        }
+    }
+}
