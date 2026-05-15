@@ -1,6 +1,7 @@
 //  GUISerial.cpp
 #include "GUISerial.hpp"
 #include <vector>
+#include <QTimer>
 
 #include <QDebug>
 
@@ -9,7 +10,14 @@ GuiSerial::GuiSerial(QWidget *parent): QWidget(parent)
     //      --Motor serial:
     mMotor = new MotorSerial;
     mCfgPorta = new CfgSerial;
-    mEstado = 0;
+
+    mSensores = 0;  //  pra teste
+
+    //      --Sentinela de porta:
+    QTimer *timerSensores = new QTimer(this);
+    connect(timerSensores, &QTimer::timeout, this, &GuiSerial::VerificarSensorPorta);
+    timerSensores->start(1500);
+    VerificarSensorPorta();
 
     MontarLay();
 }
@@ -26,12 +34,10 @@ void GuiSerial::Preencher()
     if(portas.empty())
     {
         mCbPorta->addItem("Nenhuma");
-        mEstado &= 0xfffffffe;
     }
     else
     {
-        for(std::string p : portas) mCbPorta->addItem(QString::fromStdString(p));
-        mEstado |= 1;
+        for(const std::string &p : portas) mCbPorta->addItem(QString::fromStdString(p));
     }
 
     //  -Preencher baudrate:
@@ -114,4 +120,17 @@ void GuiSerial::MontarLay()
     this->resize(400,300);
 
     Preencher();
+}
+
+void GuiSerial::VerificarSensorPorta()
+{
+    std::vector<std::string> portas = MotorSerial::ListarPortas();
+    if(portas.empty()) mSensores &= ~Sensor::PORTA_;
+    else mSensores |= Sensor::PORTA_;
+    ProcessaTransicoes();
+}
+
+void GuiSerial::ProcessaTransicoes()
+{
+    qDebug() << mSensores;  //  pra teste
 }
