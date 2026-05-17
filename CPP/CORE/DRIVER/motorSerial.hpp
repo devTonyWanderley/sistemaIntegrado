@@ -13,11 +13,13 @@
 class MotorSerial
 {
 public:
+    enum class StatusEvento{AlcaPerdida = 0, FluxoAtivo = 1, FluxoOcioso = 2};
     using DataCallback = std::function<void (std::span<const uint8_t>)>;
+    using StatusCallback = std::function<void (StatusEvento)>;
     MotorSerial();
     ~MotorSerial();
     static std::vector<std::string> ListarPortas();
-    bool Abrir(const std::string& porta, const CfgSerial& params, DataCallback cb);
+    bool Abrir(const std::string& porta, const CfgSerial& params, DataCallback cb, StatusCallback cbStatus);
     bool Enviar(std::span<const uint8_t> dados);
     void Fechar();
 private:
@@ -25,6 +27,7 @@ private:
     std::atomic<bool> mRodando{false};
     std::thread mWorker;
     DataCallback mOnData;
+    StatusCallback mOnStatus;
     std::string mNomeArquivo;
     std::ofstream mArquivo;
     void LoopLeitura();

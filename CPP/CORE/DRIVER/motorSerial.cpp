@@ -4,8 +4,9 @@
 #include <ctime>
 #include <sstream>
 #include <iomanip>
+#include <filesystem>
 
-const std::string PATH_TRABALHO = "C:/DESENV/CPP/INSTANCIA/TMP/";
+const std::string PATH_TRABALHO = "./TMP/";
 
 MotorSerial::MotorSerial() = default;
 
@@ -27,13 +28,14 @@ std::vector<std::string> MotorSerial::ListarPortas()
     return portas;
 }
 
-bool MotorSerial::Abrir(const std::string &porta, const CfgSerial &params, DataCallback cb)
+bool MotorSerial::Abrir(const std::string &porta, const CfgSerial &params, DataCallback cb, StatusCallback cbStatus)
 {
     mHSerial = CreateFileA(
         porta.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
         );
     if(mHSerial == INVALID_HANDLE_VALUE) return false;
     mOnData = cb;
+    mOnStatus = cbStatus;
     DCB dcb = {};
     dcb.DCBlength = sizeof(DCB);
     if(!GetCommState(mHSerial, &dcb)) return false;
@@ -46,13 +48,9 @@ bool MotorSerial::Abrir(const std::string &porta, const CfgSerial &params, DataC
     mNomeArquivo = GerarNomeTmp();
 
     COMMTIMEOUTS timeouts = {};
-    //timeouts.ReadIntervalTimeout = MAXWORD;
     timeouts.ReadIntervalTimeout = 50;
-
-    //timeouts.ReadTotalTimeoutConstant = 50;    //  alterado de 0 pra 50
     uint32_t baud = params.winBaud();
     timeouts.ReadTotalTimeoutConstant = (baud > 0) ? (200000 / baud) + 100 : 500;
-
     timeouts.ReadTotalTimeoutMultiplier = 0;
     SetCommTimeouts(mHSerial, &timeouts);
     mRodando = true;
@@ -87,6 +85,7 @@ void MotorSerial::LoopLeitura()
 {
     uint8_t buffer[512];
     DWORD bytesLidos = 0;
+    bool informouFluxoAtivo = false;
     while(mRodando)
     {
         if(!ReadFile(mHSerial, buffer, sizeof(buffer), &bytesLidos, NULL))
@@ -101,6 +100,11 @@ void MotorSerial::LoopLeitura()
         }
         if(bytesLidos > 0 && mOnData)
         {
+            if(!informouFluxoAtivo && mOnStatus)
+            {
+                mOnStatus(StatusEvento::FluxoAtivo);
+                informouFluxoAtivo = true;
+            }
             if(!mArquivo.is_open()) mArquivo.open(mNomeArquivo, std::ios::app | std::ios::binary);
             if(mArquivo.is_open())
             {
@@ -109,7 +113,15 @@ void MotorSerial::LoopLeitura()
             }
             mOnData(std::span<const uint8_t>(buffer, bytesLidos));
         }
-        if(bytesLidos == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        if(bytesLidos == 0)
+        {
+            if(informouFluxoAtivo && mOnStatus)
+            {
+                mOnStatus(StatusEvento::FluxoOcioso);
+                informouFluxoAtivo = false;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
 }
 

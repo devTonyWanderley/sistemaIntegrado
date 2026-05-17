@@ -17,13 +17,16 @@ class GuiSerial: public QWidget
 public:
     GuiSerial(QWidget* parent = nullptr);
 private slots:
+    void AoMudarEquipamento(int index);
+    void AoClicarComunicar();
+    void AoClicarDeclinar();
 private:
     enum class Estado: uint8_t {SemPorta = 1, ComPorta = 2, Conectado = 3, Lendo = 4, Lido = 5};
     struct Sensor
     {
-        static constexpr uint8_t PORTA_ = 1 >> 0;
-        static constexpr uint8_t ALCA_ = 1 >> 1;
-        static constexpr uint8_t FLUXO_ = 1 >> 2;
+        static constexpr uint8_t PORTA_ = 1 << 0;
+        static constexpr uint8_t ALCA_ = 1 << 1;
+        static constexpr uint8_t FLUXO_ = 1 << 2;
     };
 
     QComboBox *mCbEqui, *mCbPorta, *mCbBaud, *mCbPar, *mCbStop, *mCbSize;
@@ -35,7 +38,7 @@ private:
     QVBoxLayout *mVblMain;
     MotorSerial *mMotor;
     CfgSerial *mCfgPorta;
-    Estado mEstado;
+    Estado mEstado, mEstadoAnterior;
     uint8_t mSensores;
 
     void Preencher();
@@ -43,4 +46,12 @@ private:
 
     void VerificarSensorPorta();
     void ProcessaTransicoes();
+
+    void AtualizarDesignUi();
+
+    void Lincar();
+    void Salvar();
+
+    void Processar(std::vector<uint8_t> dd);
+    void TratarSinalMotor(MotorSerial::StatusEvento se);
 };
