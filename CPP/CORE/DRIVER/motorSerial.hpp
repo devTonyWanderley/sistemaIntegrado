@@ -22,6 +22,7 @@ public:
     bool Abrir(const std::string& porta, const CfgSerial& params, DataCallback cb, StatusCallback cbStatus);
     bool Enviar(std::span<const uint8_t> dados);
     void Fechar();
+    std::string ObterPathFile() const {return mNomeArquivo;}
 private:
     HANDLE mHSerial = INVALID_HANDLE_VALUE;
     std::atomic<bool> mRodando{false};
