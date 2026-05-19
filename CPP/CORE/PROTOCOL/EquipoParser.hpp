@@ -54,7 +54,71 @@
  * Registro com Nome Vazio (Regra de início de registro mantida):
  * @10            @11OMITIDO     @50-01524331000@51+08221455000@52+000054120
  * ============================================================================
+
+================================================================================
+ESPECIFICAÇÃO DO FORMATO DE DADOS TOPOGRÁFICOS (ENGENHARIA REVERSA)
+================================================================================
+Características Gerais:
+- Fluxo contínuo de caracteres (Stream) sem quebra de linha lógica obrigatória.
+- Blocos de dados de comprimento fixo delimitados por caracteres de controle.
+- Valores numéricos preenchidos com '0' à esquerda ou '*' para manter a largura.
+
+--------------------------------------------------------------------------------
+1. BLOCO DE CONFIGURAÇÃO DA ESTAÇÃO
+Exemplo: _'0_(P_)1.676_
+Sintaxe: _'[ID]_( [ATRIBUTO] _) [ALTURA_INSTRUMENTO] _
+
+Estrutura dos Campos:
+- _'       : Marcador de início do registro de estação.
+- [ID]     : Identificador numérico da estação (Comprimento variável até '_').
+- _(       : Delimitador de abertura do atributo.
+- [ATRIB]  : Código/Atributo da estação (Ex: P), seguido por '_)'.
+- [H_INST] : Altura do instrumento (Ex: 1.676 metros).
+- _        : Caractere terminador do bloco de estação.
+
+--------------------------------------------------------------------------------
+2. BLOCO DE VISADA SEM DISTÂNCIA (ÂNGLOS PUROS)
+Exemplo: _+NORTE_ <0955755+0000000+****d086_* _,1.600_
+Sintaxe: _+[ID]_ <[V][H]+[LIXO]d[STATUS]_* _,[H_PRISMA]_
+
+Estrutura dos Campos:
+- _+       : Marcador de início de ponto visado.
+- [ID]     : Nome/Alvo da visada (Ex: NORTE, 1). Terminador: '_'.
+- <        : Indicador de bloco de medição angular (Ângulos puros).
+- [V]      : Ângulo Vertical. Fixo em 7 dígitos (GGGMMSS). Ex: 0955755 = 095º57'55".
+- +        : Separador de ângulos.
+- [H]      : Ângulo Horizontal. Fixo em 7 dígitos (GGGMMSS). Ex: 0000000 = 000º00'00".
+- +        : Separador.
+- [LIXO]   : Preenchimento de tamanho fixo com '*' para dados não calculados.
+- d[STATUS]: Código de erro/status interno do sensor (Ex: d086, d090).
+- _* _,    : Sequência complexa de escape/transição de bloco.
+- [H_PRI]  : Altura do prisma (Ex: 1.600 metros). Terminador: '_'.
+
+--------------------------------------------------------------------------------
+3. BLOCO DE LEITURA COMPLETA (DISTÂNCIA + ÂNGULOS)
+Exemplo: _+1_ ?+00023023m0811410+11947530096\n d+00022754***+25-30050_*P_,1.600_
+Sintaxe: _+[ID]_ ?+[DIST]m[V]+[H][SUFIXO]_*[ATRIBUTO]_,[H_PRISMA]_
+
+Estrutura dos Campos:
+- _+       : Marcador de início do ponto.
+- [ID]     : Nome do ponto ordenado (Ex: 1, 2, 3). Terminador: '_'.
+- ?+       : Indicador de início de bloco com distância inclinada.
+- [DIST]   : Distância Inclinada em milímetros. Fixo em 8 dígitos, preenchido
+             com zeros (Ex: 00023023 = 23.023 metros).
+- m        : Sufixo 'metros'. Finaliza distância e inicia Ângulo Vertical.
+- [V]      : Ângulo Vertical. Fixo em 7 dígitos (GGGMMSS). Ex: 0811410 = 081º14'10".
+- +        : Separador de ângulos.
+- [H]      : Ângulo Horizontal. Fixo em 7 dígitos (GGGMMSS). Ex: 1194753 = 119º47'53".
+- [SUFIXO] : Bloco de telemetria interna calculada pelo aparelho contendo:
+             - Dados de correção atmosférica/prisma (Ex: +25-30050).
+             - Alinhamento de quebra de linha físico arbitrário (\n d+...).
+- _*       : Sequência de escape para metadados do ponto.
+- [ATRIB]  : Novo atributo caso alterado (Ex: P, M3, CERCA, PORTAO). Terminador: '_'.
+- ,        : Separador de altura.
+- [H_PRI]  : Altura do prisma associada ao ponto (Ex: 1.600). Terminador: '_'.
+================================================================================
  */
+
 
 #pragma once
 #include <string_view>
@@ -103,7 +167,7 @@ struct RegistroDado
     constexpr std::string_view hPri() const noexcept {return dados[5];}
 };
 
-class ParserEquipo
+class ParserEquipo  //  classe base
 {
 public:
     virtual ~ParserEquipo() = default;
