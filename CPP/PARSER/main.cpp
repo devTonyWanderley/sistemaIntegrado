@@ -32,104 +32,95 @@ std::string lerLimpo()
     return limpo;
 }
 
+std::vector<std::string> fatiar(std::string& texto)
+{
+    if(texto.empty()) return {};
+    std::vector<std::string> r;
+    size_t posi = 0, posf = texto.find('_');
+    r.push_back(texto.substr(posi, posf - posi));
+    if(texto.find("_(") == std::string::npos)
+    {
+        posi = texto.find("_*") + 2;
+        posf = texto.find('_', posi);
+        r.push_back(texto.substr(posi, posf - posi));
+        posi = texto.find("_,") + 2;
+        r.push_back(texto.substr(posi));
+        if(texto.find("?+") == std::string::npos)
+        {
+            posi = texto.find('<') + 1;
+            posf = texto.find('+', posi);
+            r.push_back(texto.substr(posi, posf - posi));
+            posi = posf + 1;
+            posf = texto.find('+', posi);
+            r.push_back(texto.substr(posi, posf - posi));
+            return r;
+        }
+        posi = texto.find("?+") + 2;
+        posf = texto.find('m', posi);
+        r.push_back(texto.substr(posi, posf - posi));
+        posi = posf + 1;
+        posf = texto.find('+', posi);
+        r.push_back(texto.substr(posi, posf - posi));
+        posi = posf + 1;
+        posf = texto.find("d+", posi);
+        r.push_back(texto.substr(posi, posf - posi));
+        return r;
+    }
+    posi = texto.find("_(") + 2;
+    posf = texto.find('_', posi);
+    r.push_back(texto.substr(posi, posf - posi));
+    posi = posf + 2;
+    r.push_back(texto.substr(posi));
+    return r;
+}
+
+std::string truncarTexto(std::string& texto)
+{
+    size_t e = texto.find("_\'"), v = texto.find("_+"), f = texto.find_last_of('_'), posi, posf;
+    std::string r;
+    if(e != std::string::npos && v != std::string::npos)
+    {
+        posi = (e < v)? e + 2 : v + 2;
+        e = texto.find("_\'", posi);
+        v = texto.find("_+", posi);
+        if(e != std::string::npos && v != std::string::npos) posf = (e < v)? e : v;
+        else if(e != std::string::npos) posf = e;
+        else posf = v;
+        r = texto.substr(posi, posf - posi);
+        texto = texto.substr(posf, texto.length());
+        return r;
+    }
+    if(e != std::string::npos)
+    {
+        posi = e + 2;
+        e = texto.find("_\'", posi);
+        posf = (e != std::string::npos)? e : f;
+        r = texto.substr(posi, posf - posi);
+        texto = texto.substr(posf, texto.length());
+        return r;
+    }
+    if(v != std::string::npos)
+    {
+        posi = v + 2;
+        v = texto.find("_+", posi);
+        posf = (v != std::string::npos)? v : f;
+        r = texto.substr(posi, posf - posi);
+        texto = texto.substr(posf, texto.length());
+        return r;
+    }
+    r = texto = "";
+    return r;
+}
+
 int main()
 {
     std::string leituras = lerLimpo();
-    std::cout
-        << leituras.length()
-        << '\n'
-        << leituras.find("_\'", 0) + 2
-        << '\n'
-        << leituras.find("_+", 0)
-        << '\n'
-        << leituras.substr(2, 11)
-        << std::endl;
-    size_t pos = 0, posf;
-    while(true)
+    while(!leituras.empty() && leituras.find('_') != std::string::npos)
     {
-        if(leituras.find("_\'", pos) != std::string::npos && leituras.find("_+", pos) != std::string::npos)
-        {
-            pos = (leituras.find("_\'", pos) < leituras.find("_+", pos))? leituras.find("_\'", pos) : leituras.find("_+", pos);
-            pos += 2;
-            if(leituras.find("_\'", pos) != std::string::npos && leituras.find("_+", pos) != std::string::npos)
-                posf = (leituras.find("_\'", pos) < leituras.find("_+", pos))? leituras.find("_\'", pos) : leituras.find("_+", pos);
-            else if(leituras.find("_\'", pos) != std::string::npos) posf = leituras.find("_\'", pos);
-            else if(leituras.find("_+", pos) != std::string::npos) posf = leituras.find("_+", pos);
-            else posf = leituras.length() - 1;
-        }
-        else if(leituras.find("_\'", pos) != std::string::npos)
-        {
-            pos = leituras.find("_\'", pos) + 2;
-            if(leituras.find("_\'", pos) != std::string::npos) posf = leituras.find("_\'", pos);
-            else posf = leituras.length() - 1;
-        }
-        else if(leituras.find("_+", pos) != std::string::npos)
-        {
-            pos = leituras.find("_+", pos) + 2;
-            if(leituras.find("_+", pos) != std::string::npos) posf = leituras.find("_+", pos);
-            else posf = leituras.length() - 1;
-        }
-        else break;
-        std::string linha = leituras.substr(pos, posf - pos);
-        if(linha.find("_(") != std::string::npos)
-        {
-            size_t i = 0, j = linha.find('_');
-            std::cout << linha.substr(i, j - i) << '\t';
-            i = linha.find('(') + 1;
-            j = linha.find('_', i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            i = linha.find(')') + 1;
-            std::cout << linha.substr(i) << '\n';
-        }
-        //std::cout << leituras.substr(pos, posf - pos) << '\n';
-        else if(linha.find('<') != std::string::npos)
-        {
-            //1_ <0811413+1194753+****d090_*P_,1.600_
-            //1_
-            size_t i = 0, j = linha.find('_');
-            std::cout << linha.substr(i, j - i) << '\t';
-            //<0811413+
-            i = linha.find('<') + 1;
-            j = linha.find('+', i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            //+1194753+
-            i = linha.find('+') + 1;
-            j = linha.find('+', i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            //_*P_,
-            i = linha.find("_*") + 2;
-            j = linha.find("_,", i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            i = linha.find("_,") + 2;
-            std::cout << linha.substr(i) << '\n';
-        }
-        else
-        {
-            //1_ ?+00023023m0811410+1194753d+00022754***+25-30050_*P_,1.600
-            //1_
-            size_t i = 0, j = linha.find('_');
-            std::cout << linha.substr(i, j - i) << '\t';
-            //?+00023023m
-            i = linha.find("?+") + 2;
-            j = linha.find('m', i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            //m0811410+
-            i = linha.find('m') + 1;
-            j = linha.find('+', i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            //+1194753d+
-            i = linha.find('+', i) + 1;
-            j = linha.find("d+", i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            //_*P_
-            i = linha.find("_*", i) + 2;
-            j = linha.find('_', i);
-            std::cout << linha.substr(i, j - i) << '\t';
-            //_,1.600
-            i = linha.find("_,", i) + 2;
-            std::cout << linha.substr(i) << '\n';
-        }
-        //else std::cout << linha << '\n';
+        std::string tx = truncarTexto(leituras);
+        std::cout << '\n' << tx.length() << '\t' ;
+        std::vector<std::string> registro = fatiar(tx);
+        for(auto& reg : registro) std::cout << reg << '\t';
     }
     return 0;
 }
