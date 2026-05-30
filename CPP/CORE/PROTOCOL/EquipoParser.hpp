@@ -125,29 +125,23 @@ Estrutura dos Campos:
 ================================================================================
  */
 
-
 #pragma once
 #include <string>
-//#include <string_view>
 #include <span>
 #include <cstdint>
 #include <functional>
 
-struct RegistroDado
+struct RegistroDado //  dividir o que é leitura e o que é coordenada...
 {
     std::string dados[6];
 
     constexpr RegistroDado(): dados{}{}
-
     constexpr RegistroDado(std::string id, std::string atr, std::string hi = ""): dados{id, atr, hi, "", "", ""}{}
-
     constexpr RegistroDado(std::string id, std::string atr, std::string x, std::string y, std::string z = ""):
         dados{id, atr, x, y, z, ""}{}
-
     constexpr RegistroDado(std::string id, std::string atr, std::string ah,
                            std::string hs = "", std::string av = "", std::string di = ""):
         dados{id, atr, hs, ah, av, di}{}
-
     constexpr std::string nome() const noexcept {return dados[0];}
     constexpr std::string atri() const noexcept {return dados[1];}
     constexpr std::string hIns() const noexcept {return (dados[3].empty())? dados[2] : "";}

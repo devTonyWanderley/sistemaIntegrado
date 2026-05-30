@@ -10,8 +10,10 @@ TARGET = ParserTopografia
 INCLUDEPATH += "C:/DESENV/CPP" "../CORE/PROTOCOL/"
 
 # Arquivos do projeto
-HEADERS += ../CORE/PROTOCOL/EquipoParser.hpp
-SOURCES += main.cpp
+HEADERS += ../CORE/PROTOCOL/EquipoParser.hpp \
+    ../CORE/PROTOCOL/GD5.hpp
+SOURCES += main.cpp \
+    ../CORE/PROTOCOL/GD5.cpp
 
 # Otimizações pesadas para processamento em massa (Release Mode)
 CONFIG(release, debug|release) {
