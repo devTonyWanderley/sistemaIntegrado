@@ -19,7 +19,25 @@ struct Leitura
     char nome[13] = {0};
     char atri[13] = {0};
 };
+
+struct PontoNormalizado
+{
+    uint32_t abci = std::numeric_limits<std::uint32_t>::max();
+    uint32_t orde = std::numeric_limits<std::uint32_t>::max();
+    uint32_t cota = std::numeric_limits<std::uint32_t>::max();
+    char nome[13] = {0};
+    char atri[13] = {0};
+};
 #pragma pack(pop)
+
+struct PontoCalculado
+{
+    double x;
+    double y;
+    double z;
+    char id[13];
+    char cod[13];
+};
 
 class Gd5
 {
@@ -27,8 +45,11 @@ public:
     Gd5() = default;
     bool Ler(const std::filesystem::path& fonte);
     bool Salvar(const std::filesystem::path& destino);
+    bool Carregar(const std::filesystem::path& fonte);
+    void CalcularCaderneta();
 
-    std::vector<Leitura> mCaderneta;
+    std::vector<Leitura> mCaderneta;        //  vai virar private
+    std::vector<PontoNormalizado> mPontos;  //  vai virar private
 private:
     std::string lerTmp(const std::filesystem::path& fonte);
     std::string truncarTexto(std::string& texto);

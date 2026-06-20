@@ -5,8 +5,21 @@
 
 //#include <fstream>
 //#include <sstream>
+#include <format>
 
 #include "GD5.hpp"
+
+std::string deSegPraGms(const uint32_t ang)
+{
+    std::string r;
+    r += std::format("{:03}", (ang / 3600));
+    r.push_back('º');
+    r += std::format("{:02}", ((ang % 3600) / 60));
+    r.push_back('\'');
+    r += std::format("{:02}", (ang % 60));
+    r.push_back('\"');
+    return r;
+}
 
 /*
 std::string ler()
@@ -170,8 +183,18 @@ int main()
     usandoRegistroDado();
     */
     GD5::Gd5 instancia;
-    instancia.Ler("C:\\DESENV\\CPP\\SERIAL-I\\build\\Desktop-Debug\\debug\\TMP\\20260517091828.tmp");
-    std::cout << instancia.mCaderneta.size() << std::endl;
+    //if(instancia.Carregar("C:\\DESENV\\CPP\\SERIAL-I\\build\\Desktop-Debug\\debug\\TMP\\outro.cad"))
+    if(instancia.Ler("C:\\DESENV\\CPP\\SERIAL-I\\build\\Desktop-Debug\\debug\\TMP\\20260517091828.tmp"));
+    {
+        std::cout << "mCaderneta: " << instancia.mCaderneta.size() << " registros." << std::endl;
+        instancia.CalcularCaderneta();
+        if(!instancia.mPontos.empty())
+        {
+            std::cout << "mPontos: " << instancia.mPontos.size() << " pontos." << std::endl;
+            instancia.Salvar("C:\\DESENV\\CPP\\SERIAL-I\\build\\Desktop-Debug\\debug\\TMP\\pontos.cad");
+        }
+    }
+    /*
     for(GD5::Leitura a : instancia.mCaderneta)
     {
         std::cout
@@ -179,11 +202,12 @@ int main()
             << a.atri << ' '
             << a.altu;
         if(a.aHor != std::numeric_limits<uint32_t>::max())
-            std::cout << ' ' << a.aVer << ' ' << a.aHor;
+            std::cout << ' ' << deSegPraGms(a.aVer) << ' ' << deSegPraGms(a.aHor);
         if(a.dist != std::numeric_limits<uint32_t>::max())
             std::cout << ' ' << a.dist;
         std::cout << '\n';
     }
-    instancia.Salvar("C:\\DESENV\\CPP\\SERIAL-I\\build\\Desktop-Debug\\debug\\TMP\\outro.cad");
+    */
+    //instancia.Salvar("C:\\DESENV\\CPP\\SERIAL-I\\build\\Desktop-Debug\\debug\\TMP\\outro.cad");
     return 0;
 }

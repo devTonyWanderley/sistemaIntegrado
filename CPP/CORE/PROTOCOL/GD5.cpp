@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 std::string GD5::Gd5::lerTmp(const std::filesystem::path &fonte)
 {
@@ -141,10 +142,10 @@ bool GD5::Gd5::Ler(const std::filesystem::path &fonte)
         {
             std::string s = reg.at(2), ss;
             for(auto j : s) if(j != '.') ss.push_back(j);
-            if(!ss.empty()) l.altu = 10 * static_cast<uint16_t>(std::stoi(ss));
+            if(!ss.empty()) l.altu = static_cast<uint16_t>(std::stoi(ss));
             if(reg.size() >= 6)
             {
-                l.dist = 10 * static_cast<uint32_t>(std::stoi(reg.at(3)));
+                l.dist = static_cast<uint32_t>(std::stoi(reg.at(3)));
                 std::string gr = reg.at(4).substr(0, 3), mi = reg.at(4).substr(3,2), se = reg.at(4).substr(5,2);
                 l.aVer = static_cast<uint32_t>(std::stoi(se)) + (60 * static_cast<uint32_t>(std::stoi(mi))) +
                          (3600 * static_cast<uint32_t>(std::stoi(gr)));
@@ -176,10 +177,106 @@ bool GD5::Gd5::Ler(const std::filesystem::path &fonte)
 
 bool GD5::Gd5::Salvar(const std::filesystem::path &destino)
 {
-    if(mCaderneta.empty()) return false;
+    if(mPontos.empty()) return false;
     std::ofstream arquivo(destino, std::ios::out | std::ios::binary);
     if(!arquivo.is_open()) return false;
-    arquivo.write(reinterpret_cast<const char*>(mCaderneta.data()), mCaderneta.size() * sizeof(Leitura));
+    arquivo.write(reinterpret_cast<const char*>(mPontos.data()), mPontos.size() * sizeof(PontoNormalizado));
     arquivo.close();
     return true;
+}
+
+bool GD5::Gd5::Carregar(const std::filesystem::path &fonte)
+{
+    std::ifstream arquivo(fonte, std::ios::in | std::ios::binary);
+    if(!arquivo.is_open()) return false;
+    Leitura registro;
+    mCaderneta.clear();
+    while(arquivo.read(reinterpret_cast<char*>(&registro), sizeof(Leitura))) mCaderneta.push_back(registro);
+    arquivo.close();
+    return true;
+}
+
+void GD5::Gd5::CalcularCaderneta()
+{
+    if(mCaderneta.empty()) return;
+    std::vector<PontoCalculado> pontos;
+    pontos.reserve(mCaderneta.size());
+    PontoCalculado* pEst = nullptr;
+    double hi = 0;
+    for(Leitura& l : mCaderneta)
+    {
+        if(l.aHor == std::numeric_limits<uint32_t>::max())  //  atualizar estação
+        {
+            hi = l.altu;
+            hi /= 1000;
+            if(pEst)
+            {
+                for(PontoCalculado& pc : pontos)
+                {
+                    for(int i = 0; i < 13; i++)
+                    {
+                        if(l.nome[i] != pc.id[i]) break;
+                        if(i == 12) pEst = &pc;
+                    }
+                }
+            }
+            else
+            {
+                PontoCalculado p;
+                for(int i = 0; i < 13; i++)
+                {
+                    p.id[i] = l.nome[i];
+                    p.cod[i] = l.atri[i];
+                }
+                p.x = p.y = p.z = 0;
+                pontos.push_back(p);
+                pEst = pontos.data();
+            }
+        }
+        else if(l.dist != std::numeric_limits<uint32_t>::max())
+        {
+            PontoCalculado p;
+            for(int i = 0; i < 13; i++)
+            {
+                p.id[i] = l.nome[i];
+                p.cod[i] = l.atri[i];
+            }
+            double ah = l.aHor, av = l.aVer, dist = l.dist / 1000.0, hs = l.altu;
+            ah /= 648000;
+            ah *= M_PI;
+            av /= 648000;
+            av *= M_PI;
+            hs /= 1000;
+            p.z = pEst->z + hi - hs + (dist * cos(av));
+            p.y = pEst->y + (dist * sin(av) * cos(ah));
+            p.x = pEst->x + (dist * sin(av) * sin(ah));
+            pontos.push_back(p);
+        }
+    }
+    double
+        xMin = std::numeric_limits<double>::max(),
+        yMin = std::numeric_limits<double>::max(),
+        zMin = std::numeric_limits<double>::max();
+    for(PontoCalculado& p : pontos)
+    {
+        xMin = (p.x < xMin)? p.x : xMin;
+        yMin = (p.y < yMin)? p.y : yMin;
+        zMin = (p.z < zMin)? p.z : zMin;
+    }
+    mPontos.clear();
+    mPontos.reserve(pontos.size());
+    for(PontoCalculado& p : pontos)
+    {
+        PontoNormalizado pn;
+        for(int i = 0; i < 13; i++)
+        {
+            pn.nome[i] = p.id[i];
+            pn.atri[i] = p.cod[i];
+        }
+        double x = p.x - xMin, y = p.y - yMin, z = p.z - zMin;
+        pn.abci = 10000 * x;
+        pn.orde = 10000 * y;
+        pn.cota = 10000 * z;
+        mPontos.push_back(pn);
+    }
 }
