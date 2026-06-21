@@ -32,9 +32,9 @@ struct PontoNormalizado
 
 struct PontoCalculado
 {
-    double x;
-    double y;
-    double z;
+    double x = std::numeric_limits<double>::max();
+    double y = std::numeric_limits<double>::max();
+    double z = std::numeric_limits<double>::max();
     char id[13];
     char cod[13];
 };
@@ -45,7 +45,7 @@ public:
     Gd5() = default;
     bool Ler(const std::filesystem::path& fonte);
     bool Salvar(const std::filesystem::path& destino);
-    bool Carregar(const std::filesystem::path& fonte);
+    bool CarregarCad(const std::filesystem::path& fonte);
     void CalcularCaderneta();
 
     std::vector<Leitura> mCaderneta;        //  vai virar private

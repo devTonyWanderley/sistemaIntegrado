@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <bit>
 
 std::string GD5::Gd5::lerTmp(const std::filesystem::path &fonte)
 {
@@ -185,7 +186,7 @@ bool GD5::Gd5::Salvar(const std::filesystem::path &destino)
     return true;
 }
 
-bool GD5::Gd5::Carregar(const std::filesystem::path &fonte)
+bool GD5::Gd5::CarregarCad(const std::filesystem::path &fonte)
 {
     std::ifstream arquivo(fonte, std::ios::in | std::ios::binary);
     if(!arquivo.is_open()) return false;
@@ -253,16 +254,35 @@ void GD5::Gd5::CalcularCaderneta()
             pontos.push_back(p);
         }
     }
+    //  Daqui pra baixo, deve-se organizar a octotree
     double
         xMin = std::numeric_limits<double>::max(),
         yMin = std::numeric_limits<double>::max(),
-        zMin = std::numeric_limits<double>::max();
+        zMin = std::numeric_limits<double>::max(),
+        xMax = std::numeric_limits<double>::min(),
+        yMax = std::numeric_limits<double>::min(),
+        zMax = std::numeric_limits<double>::min();
     for(PontoCalculado& p : pontos)
     {
         xMin = (p.x < xMin)? p.x : xMin;
         yMin = (p.y < yMin)? p.y : yMin;
         zMin = (p.z < zMin)? p.z : zMin;
+        xMax = (p.x > xMax)? p.x : xMax;
+        yMax = (p.y > yMax)? p.x : yMax;
+        zMax = (p.z > zMax)? p.x : zMax;
     }
+    //  Aqui entra o recálculo das constantes
+    //  #1 -> extremos superiores da octotree:
+    uint32_t
+        xOtMax = std::bit_ceil(reinterpret_cast<uint32_t>(10000 * (xMax - xMin))),
+        yOtMax = std::bit_ceil(reinterpret_cast<uint32_t>(10000 * (yMax - yMin))),
+        zOtMax = std::bit_ceil(reinterpret_cast<uint32_t>(10000 * (zMax - zMin)));
+    //  #2 -> Deslocamento da orígem (constante de soma):
+    uint32_t
+        deltaX = (xOtMax - (reinterpret_cast<uint32_t>(10000 * (xMax - xMin)))) >> 1,   //  folga
+        deltaY = (yOtMax - (reinterpret_cast<uint32_t>(10000 * (yMax - yMin)))) >> 1,
+        deltaZ = (zOtMax - (reinterpret_cast<uint32_t>(10000 * (zMax - zMin)))) >> 1;
+    //  !!! por enquanto, o arquivo e mPontos ainda não organizados como octotree, mas já com valores centralizados !!!
     mPontos.clear();
     mPontos.reserve(pontos.size());
     for(PontoCalculado& p : pontos)
@@ -274,9 +294,9 @@ void GD5::Gd5::CalcularCaderneta()
             pn.atri[i] = p.cod[i];
         }
         double x = p.x - xMin, y = p.y - yMin, z = p.z - zMin;
-        pn.abci = 10000 * x;
-        pn.orde = 10000 * y;
-        pn.cota = 10000 * z;
+        pn.abci = (10000 * x) + deltaX;
+        pn.orde = (10000 * y) + deltaY;
+        pn.cota = (10000 * z) + deltaZ;
         mPontos.push_back(pn);
     }
 }
