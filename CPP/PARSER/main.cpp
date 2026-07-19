@@ -12,31 +12,33 @@
 #include "GD5.hpp"
 #include <iostream>
 
-//  C:\DESENV\CPP\INSTANCIA
+//  C:\DESENV\CPP\INSTANCIA C:/Tony/Soft/cpp/integrado/sistemaIntegrado/CPP/INSTANCIA/TMP/20260510162421.tmp
 
 int main()
 {
     GD5::Gd5 inst;
-    inst.Ler("C:/DESENV/CPP/SERIAL-I/build/Desktop-Debug/debug/TMP/20260517091828.tmp");    //  Carrega mCaderneta
+    inst.Ler("C:/Tony/Soft/cpp/integrado/sistemaIntegrado/CPP/INSTANCIA/TMP/20260510162421.tmp");    //  Carrega mCaderneta
     std::cout << "mCaderneta: " << inst.mCaderneta.size() << " Leitura\'s de \"inst\"" << std::endl;
     inst.CalcularCaderneta();
     std::cout << "mPontos: " << inst.mPontos.size() << " PontoNormalizado\'s de \"inst\"" << std::endl;
+    /*
     GD5::Gd5 outraInst;
     outraInst.CarregarCad("C:/DESENV/CPP/SERIAL-I/build/Desktop-Debug/debug/TMP/outro.cad");
     std::cout << "mCaderneta: " << outraInst.mCaderneta.size() << " Leitura\'s de \"outraInst\"" << std::endl;
     outraInst.CalcularCaderneta();
     std::cout << "mPontos: " << outraInst.mPontos.size() << " PontoNormalizado\'s de \"outraInst\"" << std::endl;
+    */
     //  --APRESENTAR mPontos--
-    for(GD5::PontoNormalizado &p : outraInst.mPontos)
-        std::cout << p.nome
+    for(GD5::PontoCalculado &p : inst.mPCal)
+        std::cout << p.id
                   << ' '
-                  << p.atri
+                  << p.cod
                   << ' '
-                  << p.abci
+                  << p.x
                   << ' '
-                  << p.orde
+                  << p.y
                   << ' '
-                  << p.cota
+                  << p.z
                   << std::endl;
     return 0;
 }

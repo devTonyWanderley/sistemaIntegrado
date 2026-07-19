@@ -200,8 +200,10 @@ bool GD5::Gd5::CarregarCad(const std::filesystem::path &fonte)
 void GD5::Gd5::CalcularCaderneta()
 {
     if(mCaderneta.empty()) return;
-    std::vector<PontoCalculado> pontos;
-    pontos.reserve(mCaderneta.size());
+    //std::vector<PontoCalculado> pontos;
+    mPCal.clear();
+    //pontos.reserve(mCaderneta.size());
+    mPCal.reserve(mCaderneta.size());
     PontoCalculado* pEst = nullptr;
     double hi = 0;
     for(Leitura& l : mCaderneta)
@@ -212,7 +214,7 @@ void GD5::Gd5::CalcularCaderneta()
             hi /= 1000;
             if(pEst)
             {
-                for(PontoCalculado& pc : pontos)
+                for(PontoCalculado& pc : mPCal)
                 {
                     for(int i = 0; i < 13; i++)
                     {
@@ -230,8 +232,8 @@ void GD5::Gd5::CalcularCaderneta()
                     p.cod[i] = l.atri[i];
                 }
                 p.x = p.y = p.z = 0;
-                pontos.push_back(p);
-                pEst = pontos.data();
+                mPCal.push_back(p);
+                pEst = mPCal.data();
             }
         }
         else if(l.dist != std::numeric_limits<uint32_t>::max())
@@ -251,10 +253,10 @@ void GD5::Gd5::CalcularCaderneta()
             p.z = pEst->z + hi - hs + (dist * cos(av));
             p.y = pEst->y + (dist * sin(av) * cos(ah));
             p.x = pEst->x + (dist * sin(av) * sin(ah));
-            pontos.push_back(p);
+            mPCal.push_back(p);
         }
     }
-    //  Daqui pra baixo, deve-se organizar a octotree
+    /*  Daqui pra baixo, deve-se organizar a octotree
     double
         xMin = std::numeric_limits<double>::max(),
         yMin = std::numeric_limits<double>::max(),
@@ -283,6 +285,7 @@ void GD5::Gd5::CalcularCaderneta()
         deltaY = (yOtMax - (reinterpret_cast<uint32_t>(10000 * (yMax - yMin)))) >> 1,
         deltaZ = (zOtMax - (reinterpret_cast<uint32_t>(10000 * (zMax - zMin)))) >> 1;
     //  !!! por enquanto, o arquivo e mPontos ainda não organizados como octotree, mas já com valores centralizados !!!
+
     mPontos.clear();
     mPontos.reserve(pontos.size());
     for(PontoCalculado& p : pontos)
@@ -299,4 +302,5 @@ void GD5::Gd5::CalcularCaderneta()
         pn.cota = (10000 * z) + deltaZ;
         mPontos.push_back(pn);
     }
+    */
 }

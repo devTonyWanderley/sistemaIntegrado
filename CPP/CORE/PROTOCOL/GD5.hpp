@@ -1,10 +1,11 @@
-//	GD5.hpp
+//	C:\Tony\Soft\cpp\integrado\sistemaIntegrado\CPP\CORE\PROTOCOL\GD5.hpp
 #pragma once
 #include <cstdint>
 #include <limits>
 #include <string>
 #include <vector>
 #include <filesystem>
+#include "../CORE/TYPES/OctoTree.hpp"
 
 namespace GD5
 {
@@ -48,8 +49,10 @@ public:
     bool CarregarCad(const std::filesystem::path& fonte);
     void CalcularCaderneta();
 
-    std::vector<Leitura> mCaderneta;        //  vai virar private
+    std::vector<Leitura> mCaderneta;
     std::vector<PontoNormalizado> mPontos;  //  vai virar private
+    std::vector<PontoCalculado> mPCal;
+    // substituir os dois últimos por uma instância da classe OctoTree
 private:
     std::string lerTmp(const std::filesystem::path& fonte);
     std::string truncarTexto(std::string& texto);
