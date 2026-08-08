@@ -1,14 +1,11 @@
-//	GD5.cpp
-#include "GD5.hpp"
-#include <sstream>
+//  C:\Tony\Soft\cpp\integrado\sistemaIntegrado\CPP\CORE\PROTOCOL\GeodeticGd5.cpp, substituindo ..\GD5.cpp
+#include "GeodeticGd5.hpp"
 #include <fstream>
-#include <cstdio>
+#include <sstream>
 #include <iostream>
-#include <algorithm>
 #include <cmath>
-#include <bit>
 
-std::string GD5::Gd5::lerTmp(const std::filesystem::path &fonte)
+std::string Gdtc::Geodetic::lerTmp(const std::filesystem::path &fonte)
 {
     std::ifstream arquivo(fonte, std::ios::binary);
     if(!arquivo.is_open()) return "";
@@ -28,7 +25,7 @@ std::string GD5::Gd5::lerTmp(const std::filesystem::path &fonte)
     return r;
 }
 
-std::string GD5::Gd5::truncarTexto(std::string &texto)
+std::string Gdtc::Geodetic::truncarTexto(std::string &texto)
 {
     size_t e = texto.find("_\'"), v = texto.find("_+"), f = texto.find_last_of('_'), posi, posf;
     std::string r;
@@ -66,15 +63,12 @@ std::string GD5::Gd5::truncarTexto(std::string &texto)
     return r;
 }
 
-std::vector<std::string> GD5::Gd5::fatiar(std::string &texto)
+std::vector<std::string> Gdtc::Geodetic::fatiar(std::string &texto)
 {
     if(texto.empty()) return {};
     std::vector<std::string> r;
     size_t posi = 0, posf = texto.find('_');
-    //  1_(P_)1.676 |
-    //  1_ <0811413+1194753+****d090_*P_,1.600 |
-    //  1_ ?+00033870m0812338+1205111d+00033488***+25-30058_*P_,1.600
-    r.push_back(texto.substr(posi, posf - posi));   //  {"1"}
+    r.push_back(texto.substr(posi, posf - posi));
     if(texto.find("_(") == std::string::npos)
     {
         size_t ast = texto.find("_*");
@@ -82,52 +76,52 @@ std::vector<std::string> GD5::Gd5::fatiar(std::string &texto)
         posi = ast + 2;
         posf = texto.find('_', posi);
         if(posf == std::string::npos) return r;
-        r.push_back(texto.substr(posi, posf - posi));   //  {"1" "P"}
+        r.push_back(texto.substr(posi, posf - posi));
         ast = texto.find("_,");
         if(ast == std::string::npos) return r;
         posi = ast + 2;
-        r.push_back(texto.substr(posi));   //  {"1" "P" "1.600"}
+        r.push_back(texto.substr(posi));
         if(texto.find("?+") == std::string::npos)
         {
             ast = texto.find('<');
             if(ast == std::string::npos) return r;
             posi = ast + 1;
             posf = texto.find('+', posi);
-            r.push_back(texto.substr(posi, posf - posi));   //  {"1" "P" "1.600" "0811413"}
+            r.push_back(texto.substr(posi, posf - posi));
             posi = posf + 1;
             posf = texto.find('+', posi);
             if(posf == std::string::npos) return r;
-            r.push_back(texto.substr(posi, posf - posi));   //  {"1" "P" "1.600" "0811413" "1194753"}
-            return r;   //  {id atr hs av ah}
+            r.push_back(texto.substr(posi, posf - posi));
+            return r;
         }
         ast = texto.find("?+");
         if(ast == std::string::npos) return r;
         posi = ast + 2;
         posf = texto.find('m', posi);
         if(posf == std::string::npos) return r;
-        r.push_back(texto.substr(posi, posf - posi));   //  {"1" "P" "1.600" "00033870"}
+        r.push_back(texto.substr(posi, posf - posi));
         posi = posf + 1;
         posf = texto.find('+', posi);
         if(posf == std::string::npos) return r;
-        r.push_back(texto.substr(posi, posf - posi));   //  {"1" "P" "1.600" "00033870" "0812338"}
+        r.push_back(texto.substr(posi, posf - posi));
         posi = posf + 1;
         posf = texto.find("d+", posi);
         if(posf == std::string::npos) return r;
-        r.push_back(texto.substr(posi, posf - posi));   //  {"1" "P" "1.600" "00033870" "0812338" "1205111"}
-        return r;   //  {id atr hs di av ah}
+        r.push_back(texto.substr(posi, posf - posi));
+        return r;
     }
     size_t abrep = texto.find("_(");
     if(abrep == std::string::npos) return r;
     posi = abrep + 2;
     posf = texto.find('_', posi);
     if(posf == std::string::npos) return r;
-    r.push_back(texto.substr(posi, posf - posi));   //  {"1" "P"}
+    r.push_back(texto.substr(posi, posf - posi));
     posi = posf + 2;
-    if(posi < texto.length()) r.push_back(texto.substr(posi));   //  {"1" "P" "1.676"}
-    return r;   //  {id atr hi}
+    if(posi < texto.length()) r.push_back(texto.substr(posi));
+    return r;
 }
 
-bool GD5::Gd5::Ler(const std::filesystem::path &fonte)
+bool Gdtc::Geodetic::Ler(const std::filesystem::path &fonte)
 {
     std::string lido = lerTmp(fonte);
     if(lido.empty()) return false;
@@ -136,9 +130,9 @@ bool GD5::Gd5::Ler(const std::filesystem::path &fonte)
         std::string tx = truncarTexto(lido);
         std::vector<std::string> reg = fatiar(tx);
         if(reg.size() < 3) continue;
-        Leitura l;
-        std::snprintf(l.nome, sizeof(l.nome), "%s", reg.at(0).c_str());
-        std::snprintf(l.atri, sizeof(l.atri), "%s", reg.at(1).c_str());
+        Geom::LeituraGD5 l;
+        l.nome = reg.at(0);
+        l.atri = reg.at(1);
         try
         {
             std::string s = reg.at(2), ss;
@@ -153,7 +147,7 @@ bool GD5::Gd5::Ler(const std::filesystem::path &fonte)
                 gr = reg.at(5).substr(0,3); mi = reg.at(5).substr(3,2); se = reg.at(5).substr(5,2);
                 l.aHor = static_cast<uint32_t>(std::stoi(se)) + (60 * static_cast<uint32_t>(std::stoi(mi))) +
                          (3600 * static_cast<uint32_t>(std::stoi(gr)));
-            }
+            }   //  fim do if
             else if(reg.size() == 5)
             {
                 if(reg.at(3).length() >= 7 && reg.at(4).length() >= 7)
@@ -165,83 +159,56 @@ bool GD5::Gd5::Ler(const std::filesystem::path &fonte)
                     l.aHor = static_cast<uint32_t>(std::stoi(se)) + (60 * static_cast<uint32_t>(std::stoi(mi))) +
                              (3600 * static_cast<uint32_t>(std::stoi(gr)));
                 }
-            }
+            }  //  fim do else if
             mCaderneta.push_back(l);
-        }
-        catch (const std::exception& e)
+        }   //  fim do try
+        catch(const std::exception& e)
         {
             std::cerr << "Erro ao processar: " << e.what() << std::endl;
-        }
-    }
-    return true;
+        } //  fim do try-catch
+    }  //  fim do while
+    return (!mCaderneta.empty());
 }
 
-bool GD5::Gd5::Salvar(const std::filesystem::path &destino)
-{
-    if(mPontos.empty()) return false;
-    std::ofstream arquivo(destino, std::ios::out | std::ios::binary);
-    if(!arquivo.is_open()) return false;
-    arquivo.write(reinterpret_cast<const char*>(mPontos.data()), mPontos.size() * sizeof(PontoNormalizado));
-    arquivo.close();
-    return true;
-}
-
-bool GD5::Gd5::CarregarCad(const std::filesystem::path &fonte)
-{
-    std::ifstream arquivo(fonte, std::ios::in | std::ios::binary);
-    if(!arquivo.is_open()) return false;
-    Leitura registro;
-    mCaderneta.clear();
-    while(arquivo.read(reinterpret_cast<char*>(&registro), sizeof(Leitura))) mCaderneta.push_back(registro);
-    arquivo.close();
-    return true;
-}
-
-void GD5::Gd5::CalcularCaderneta()
+void Gdtc::Geodetic::CalcularCaderneta()
 {
     if(mCaderneta.empty()) return;
-    mPCal.clear();
-    mPCal.reserve(mCaderneta.size());
-    PontoCalculado* pEst = nullptr;
+    mPontos.clear();
+    mPontos.reserve(mCaderneta.size());
+    Geom::PontoMetrico* pEst = nullptr;
     double hi = 0;
-    for(Leitura& l : mCaderneta)
+    for(Geom::LeituraGD5& l : mCaderneta)
     {
-        if(l.aHor == std::numeric_limits<uint32_t>::max())  //  atualizar estação
+        if(l.aHor == std::numeric_limits<uint32_t>::max())
         {
             hi = l.altu;
             hi /= 1000;
             if(pEst)
             {
-                for(PontoCalculado& pc : mPCal)
+                for(Geom::PontoMetrico& pc : mPontos)
                 {
-                    for(int i = 0; i < 13; i++)
+                    if(l.nome == pc.nome)
                     {
-                        if(l.nome[i] != pc.id[i]) break;
-                        if(i == 12) pEst = &pc;
-                    }
-                }
-            }
+                        pEst = &pc;
+                        break;
+                    }   //  fim do if
+                }   //  fim do for
+            }   //  fim do if
             else
             {
-                PontoCalculado p;
-                for(int i = 0; i < 13; i++)
-                {
-                    p.id[i] = l.nome[i];
-                    p.cod[i] = l.atri[i];
-                }
-                p.x = p.y = p.z = 0;
-                mPCal.push_back(p);
-                pEst = mPCal.data();
-            }
-        }
+                Geom::PontoMetrico p;
+                p.nome = l.nome;
+                p.atri = l.atri;
+                p.x = p.y = p.z = 0.0;
+                mPontos.push_back(p);
+                pEst = mPontos.data();
+            }  //  fim do else
+        }   //  fim do if
         else if(l.dist != std::numeric_limits<uint32_t>::max())
         {
-            PontoCalculado p;
-            for(int i = 0; i < 13; i++)
-            {
-                p.id[i] = l.nome[i];
-                p.cod[i] = l.atri[i];
-            }
+            Geom::PontoMetrico p;
+            p.nome = l.nome;
+            p.atri = l.atri;
             double ah = l.aHor, av = l.aVer, dist = l.dist / 1000.0, hs = l.altu;
             ah /= 648000;
             ah *= M_PI;
@@ -251,7 +218,7 @@ void GD5::Gd5::CalcularCaderneta()
             p.z = pEst->z + hi - hs + (dist * cos(av));
             p.y = pEst->y + (dist * sin(av) * cos(ah));
             p.x = pEst->x + (dist * sin(av) * sin(ah));
-            mPCal.push_back(p);
-        }
-    }
+            mPontos.push_back(p);
+        }   //  fim do else if
+    }  //  fim do for
 }

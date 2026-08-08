@@ -1,9 +1,8 @@
-//  C:\Tony\Soft\cpp\integrado\sistemaIntegrado\CPP\CORE\TYPES\OctoTree.hpp
+//  C:\Tony\Soft\cpp\integrado\sistemaIntegrado\CPP\CORE\TYPES\OctoTree.hpp |   Compilador: GCC (MinGW), Versao: 13.1
 #pragma once
-#include <cstdint>
-#include <limits>
-#include <string>
+#include "TiposElementares.hpp"
 #include <vector>
+
 /*
 ================================================================================
 ARQUITETURA DO MOTOR ESPACIAL GENÉRICO (OCTREE)
@@ -42,39 +41,69 @@ ARQUITETURA DO MOTOR ESPACIAL GENÉRICO (OCTREE)
               ponderada de 64 bits (uint64_t) para máxima velocidade de clock,
               eliminando conversões e mantendo a localidade de cache.
 ================================================================================
+
+Enriquecimento com Morton e uso do uint128_t:
+================================================================================
+DIRETRIZES DE ARQUITETURA E CONCLUSÕES DO DESIGN ESPACIAL (MORTON HÍBRIDO)
+================================================================================
+
+1. RESOLUÇÃO E CHAVE GERAL (uint128_t):
+   - Chave Morton unificada de 128 bits (42 bits/eixo) para indexação global.
+   - Unidade espacial discreta fixada em Décimo de Milímetro (0.1 mm).
+   - Amplitude linear máxima de ~439.804 km (Cobre o planeta em uma única raiz).
+   - Elimina a necessidade de malhas ou vetores de raízes coirmãs no runtime.
+
+2. LOGALIDADE DE CACHE E PESO EM MEMÓRIA:
+   - Ordenação estática por Código Morton ao fim da Passagem 2 via std::sort.
+   - O mDict ordenado garante buscas de metadados estáticos em O(log N).
+   - Chaves de 128 bits custam 16 bytes. Comparação de chaves (<, >, ==) gera
+     apenas 2 instruções de máquina na CPU 64-bits. Impacto no clock é nulo.
+   - O verdadeiro gargalo evitado: Cache Misses eliminados pela linearidade.
+
+3. DESEMPACOTAMENTO E BUSCA POR RAIO (RADIUS SEARCH):
+   - Etapa A (Filtro BBox): Delimitação rápida de intervalo linear de memória
+     operando diretamente nos limites [M_min, M_max] em uint128_t.
+   - Etapa B (Validação na Folha): O código Morton de 128 bits dos candidatos é
+     desempacotado via Bit-Deinterleaving (máscaras e shifts) para X, Y, Z.
+   - Execução Numérica: Coordenadas isoladas e cálculos de elipsoide inteira
+     ponderada rodam estritamente em uint64_t nativo (1 ciclo de clock).
+   - Evita totalmente multiplicações em 128 bits e cálculos em double.
+================================================================================
 */
 
 namespace OT
 {
-struct Locus
-{
-    uint32_t abci = std::numeric_limits<uint32_t>::max();
-    uint32_t orde = std::numeric_limits<uint32_t>::max();
-    uint32_t cota = std::numeric_limits<uint32_t>::max();
-};
-
-struct alignas(8) Quali
-{
-    uint32_t Nome = std::numeric_limits<uint32_t>::max();
-    uint32_t Atri = std::numeric_limits<uint32_t>::max();
-};
-
-struct alignas(8) Ponto
-{
-    uint32_t locus = std::numeric_limits<uint32_t>::max();
-    uint32_t quali = std::numeric_limits<uint32_t>::max();
-};
-
 class OctoTree
 {
 private:
-    std::vector<std::string> mDict;
-    std::vector<Locus> mCoords;
-    std::vector<Quali> mMDados;
-    std::vector<Ponto> mPontos;
+    std::vector<std::string> mDict; //  dicionário de strings
+    std::vector<unsigned __int128> mCoords;    //  banco de coordenadas empacotadas (morton) e ordenadas
+    std::vector<Geom::iPonto> mIPontos;
     double mOffSet[3] = {0.0, 0.0, 0.0};
     double mEscala[3] = {1.0, 1.0, 1.0};
+
+    unsigned __int128 espalhaBits3d(std::uint64_t n);
+    unsigned __int128 geraMorton3d(std::uint64_t x, std::uint64_t y, std::uint64_t z);
+
+    template<typename T>
+    std::uint32_t buscaBinaria(const std::vector<T>& v, const T& e) const
+    {
+        std::uint32_t esq = 0, dir = v.size() - 1;
+        while(esq <= dir)
+        {
+            std::uint32_t meio = esq + ((dir - esq) / 2);
+            if(v.at(meio) == e) return meio;
+            if(v.at(meio) > e) esq = meio;
+            else dir = meio;
+        }
+        return std::numeric_limits<std::uint32_t>::max();
+    }
+    std::uint64_t compctaBits(unsigned __int128 m);
+    double lerCoordi(int i, unsigned __int128 m);
 public:
     OctoTree() = default;
+
+    void carregaOT(std::vector<Geom::PontoMetrico>& pontos);
 };
+
 }
